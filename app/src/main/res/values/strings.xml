@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+    <string name="app_widget_description">This is an app widget description</string>
+    <string name="icon_cancel">
+        &#xe60a;
+    </string>
+    <string name="icon_right">
+        &#xe609;
+    </string>
+</resources>

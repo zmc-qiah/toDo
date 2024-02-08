@@ -1,0 +1,75 @@
+def findComponent(String projectName, Closure closure) {
+    def component = Components.find {
+        return it.module == projectName
+    }
+    if (component && component.dependencies) {
+        println("║ [${component.module}]---has dependencies:${component.dependencies}")
+        component.dependencies.each { index ->
+            def dependency = Components.get(index)
+            closure(dependency)
+        }
+    }
+}
+
+def importDependencies(String projectName, DependencyHandler dependencyHandler) {
+    println "╔════════════════Build Script 【${projectName}】 Start════════════════╗"
+    findComponent(projectName) {
+        dependency ->
+            def path
+            String des
+            if (dependency.localEnable) {
+                path = project(":${dependency.module}")
+                des = "is localed,is imported ${dependency.localPath ?: "in project"}"
+            } else {
+                def remote = "${dependency.version}${dependency.snapshot ? '-SNAPSHOT' : ''}"
+                path = ("${dependency.group}:${dependency.module}:$remote")
+                des = "is remoted,version:$remote"
+            }
+            println "║  └————component:[${dependency.module}] $des"
+            dependencyHandler.implementation path
+    }
+    println "╚════════════════Build Script 【${projectName}】   End════════════════╝"
+}
+
+def includeComponents(String projectName) {
+    println "╔════════════════Setting Script 【${projectName}】 Start════════════════"
+    findComponent(projectName) {
+        dependency ->
+            if (dependency.localEnable) {
+                if (dependency.localPath) {
+                    def local = "${dependency.localPath}"
+                    println("║  └————enable local dependency:[${dependency.module}],path:$local")
+                    include ":${dependency.module}"
+                    project(":${dependency.module}").projectDir = new File(parentPath.toFile(), local)
+                } else {
+                    println("║  └————enable local dependency:[${dependency.module}],path:in project")
+                    include ":${dependency.module}"
+                }
+            }
+    }
+    println "╚════════════════Setting Script 【${projectName}】   End════════════════"
+}
+
+ext {
+    COMPONENT_GROUP = 'org.jxxy.debug'
+    Components = [
+            [
+                    index      : 0,
+                    module     : 'corekit',
+                    group      : COMPONENT_GROUP,
+                    snapshot   : true,
+                    version    : '1.0.0.35',
+                    localEnable: false,
+                    localPath  : 'Self_Demo\\corekit'
+            ],
+            [
+                    index       : 1,
+                    module      : 'app',
+                    dependencies: [0],
+            ]
+    ]
+    parentPath = rootProject.projectDir.parentFile.toPath()
+
+    includeComponents = this.&includeComponents
+    importDependencies = this.&importDependencies
+}
